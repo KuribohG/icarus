@@ -25,10 +25,9 @@ type Task struct {
 	User    User
 	Courses []Course // A list concatenated by "or"
 
-	mutex   sync.Mutex
-	statex  sync.RWMutex
-	signal  chan bool
-	running bool
+	mutex        sync.Mutex
+	running      bool
+	currentRunID int
 
 	login   bool
 	session LoginSession
@@ -43,13 +42,12 @@ func NewTask(user User, courses []Course) *Task {
 	return &Task{
 		User:    user,
 		Courses: courses,
-		signal:  make(chan bool),
 	}
 }
 
 func (t *Task) logError(err error, msg string) {
-	t.statex.Lock()
-	defer t.statex.Unlock()
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 
 	log.Warnf("%s: %s", msg, err.Error())
 	t.failed++
@@ -57,10 +55,17 @@ func (t *Task) logError(err error, msg string) {
 }
 
 func (t *Task) logOK() {
-	t.statex.Lock()
-	defer t.statex.Unlock()
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 
 	t.succeeded++
+}
+
+func (t *Task) logElected() {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	t.elected = true
 }
 
 func (t *Task) runOnce() bool {
@@ -91,8 +96,8 @@ func (t *Task) runOnce() bool {
 				t.logOK()
 
 				if elected {
-					t.elected = true
-					go t.Stop()
+					t.logElected()
+					t.Stop()
 				}
 			}(v)
 		}
@@ -105,93 +110,67 @@ func (t *Task) runOnce() bool {
 	}
 }
 
-func (t *Task) run(signal chan bool) {
+func (t *Task) run(runID int) {
 	retried := 0
-	for {
-		terminated := false
+	for t.running && runID == t.currentRunID {
 		endOfTurn := time.After(LoopInterval)
 
-		select {
-		case <-signal:
-			// log.Println("terminating 1")
-			terminated = true
-		default:
-			// log.Println("continue")
-			func() {
-				t.mutex.Lock()
-				defer t.mutex.Unlock()
+		// Do major work
+		ok := t.runOnce()
 
-				// Do major work
-				ok := t.runOnce()
+		func() {
+			t.mutex.Lock()
+			defer t.mutex.Unlock()
 
-				select {
-				case <-signal:
-					// log.Println("terminating 2")
-					terminated = true
-				default:
-					if !ok {
-						retried++
-						if retried >= MaxRetry {
-							go t.Restart()
-						}
-					} else {
-						retried = 0
-					}
+			if !ok {
+				retried++
+				if retried >= MaxRetry {
+					// Restart
+					t.login = false
 				}
-			}()
-		}
-
-		if terminated {
-			break
-		}
+			} else {
+				retried = 0
+			}
+		}()
 
 		<-endOfTurn
 	}
-	// log.Println("out of loop")
 }
 
 func (t *Task) Start() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	t.statex.Lock()
-	defer t.statex.Unlock()
 
 	if !t.running {
 		t.running = true
+		t.login = false
 		t.elected = false
 
-		go t.run(t.signal)
+		t.currentRunID++
+		go t.run(t.currentRunID)
 	}
 }
 
 func (t *Task) Stop() {
-	// log.Println("stop")
-	t.signal <- true
-
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	t.statex.Lock()
-	defer t.statex.Unlock()
 
-	// Send signal to terminate the old loop
-	t.signal = make(chan bool)
 	t.running = false
-
 	t.login = false
-
-	t.succeeded = 0
-	t.failed = 0
-	t.lastError = ""
 }
 
 func (t *Task) Restart() {
-	t.Stop()
-	t.Start()
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	if t.running {
+		t.login = false
+	}
 }
 
 func (t *Task) Statistics() (running bool, succeeded int64, failed int64, lastError string, elected bool) {
-	t.statex.RLock()
-	defer t.statex.RUnlock()
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 
 	return t.running, t.succeeded, t.failed, t.lastError, t.elected
 }

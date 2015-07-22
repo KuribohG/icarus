@@ -14,6 +14,7 @@ type testCourse struct {
 	remaining   int32
 	errorToMake int32
 	elected     int32
+	concurrent  int32
 }
 
 const session = "xxx"
@@ -22,6 +23,7 @@ func NewTestCourse(remaining int32, errorToMake int32) testCourse {
 	return testCourse{
 		remaining:   remaining,
 		errorToMake: errorToMake,
+		concurrent:  0,
 		elected:     0,
 	}
 }
@@ -35,12 +37,18 @@ func (t *testCourse) Description() string {
 }
 
 func (t *testCourse) Elect(k LoginSession) (bool, error) {
+	conc := atomic.AddInt32(&t.concurrent, 1)
+	if conc > 1 {
+		log.Fatalf("2 goroutines electing at the same time!")
+	}
+	defer atomic.AddInt32(&t.concurrent, -1)
+
 	log.Printf("Electing...Remaining %d, Elected %d", t.remaining, t.elected)
 	if reflect.TypeOf(k).Name() != "string" {
 		log.Fatalf("Wrong type of login session.")
 	}
 	if k.(string) != session {
-		log.Fatalf("Wrong type of login session.")
+		log.Fatalf("Wrong value of login session.")
 	}
 
 	atomic.AddInt32(&t.elected, 1)
@@ -61,6 +69,7 @@ func (t *testCourse) Elect(k LoginSession) (bool, error) {
 type testUser struct {
 	errorToMake int32
 	loginCount  int32
+	concurrent  int32
 }
 
 func (t *testUser) Name() string {
@@ -68,6 +77,12 @@ func (t *testUser) Name() string {
 }
 
 func (t *testUser) Login() (LoginSession, error) {
+	conc := atomic.AddInt32(&t.concurrent, 1)
+	if conc > 1 {
+		log.Fatalf("2 goroutines electing at the same time!")
+	}
+	defer atomic.AddInt32(&t.concurrent, -1)
+
 	log.Printf("Login...")
 	atomic.AddInt32(&t.loginCount, 1)
 	time.Sleep(time.Duration(rand.Float32()*3000) * time.Millisecond)
