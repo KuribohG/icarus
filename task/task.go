@@ -22,8 +22,8 @@ type User interface {
 }
 
 type Task struct {
-	User    User
-	Courses []Course // A list concatenated by "or"
+	user    User
+	courses []Course // A list concatenated by "or"
 
 	mutex        sync.Mutex
 	running      bool
@@ -32,17 +32,28 @@ type Task struct {
 	login   bool
 	session LoginSession
 
-	succeeded int64 // Number of succeeded attempt
-	failed    int64 // Number of failed attempt
+	succeeded int64
+	failed    int64
 	lastError string
 	elected   bool
 }
 
+// Make a new task.
 func NewTask(user User, courses []Course) *Task {
 	return &Task{
-		User:    user,
-		Courses: courses,
+		user:    user,
+		courses: courses,
 	}
+}
+
+// Get this task's login user.
+func (t *Task) User() User {
+	return t.user
+}
+
+// Get this task's candidate courses.
+func (t *Task) Courses() []Course {
+	return t.courses
 }
 
 func (t *Task) logError(err error, msg string) {
@@ -70,7 +81,7 @@ func (t *Task) logElected() {
 
 func (t *Task) runOnce() bool {
 	if !t.login {
-		session, err := t.User.Login()
+		session, err := t.user.Login()
 		if err != nil {
 			return false
 		}
@@ -80,7 +91,7 @@ func (t *Task) runOnce() bool {
 	} else {
 		var wg sync.WaitGroup
 		noError := true
-		for _, v := range t.Courses {
+		for _, v := range t.courses {
 			wg.Add(1)
 
 			// Elect a course
@@ -89,7 +100,7 @@ func (t *Task) runOnce() bool {
 				elected, err := c.Elect(t.session)
 				if err != nil {
 					noError = false
-					t.logError(err, fmt.Sprintf("%s: %s", t.User.Name(), c.Name()))
+					t.logError(err, fmt.Sprintf("%s: %s", t.user.Name(), c.Name()))
 					return
 				}
 
@@ -137,6 +148,7 @@ func (t *Task) run(runID int) {
 	}
 }
 
+// Start this task.
 func (t *Task) Start() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -151,6 +163,7 @@ func (t *Task) Start() {
 	}
 }
 
+// Terminate this task.
 func (t *Task) Stop() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -159,6 +172,7 @@ func (t *Task) Stop() {
 	t.login = false
 }
 
+// Restart this task.
 func (t *Task) Restart() {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -168,6 +182,7 @@ func (t *Task) Restart() {
 	}
 }
 
+// Get this task's statistics.
 func (t *Task) Statistics() (running bool, succeeded int64, failed int64, lastError string, elected bool) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()

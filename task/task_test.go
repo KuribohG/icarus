@@ -227,7 +227,7 @@ func TestRestart(t *testing.T) {
 func TestStop(t *testing.T) {
 	MaxRetry = 5
 	LoopInterval = 3 * time.Second
-	log.Printf("TestRestart: Elect every %.2f seconds.", float32(LoopInterval/time.Second))
+	log.Printf("TestStop: Elect every %.2f seconds.", float32(LoopInterval/time.Second))
 
 	var testCount int32 = 5
 	user := testUser{}
@@ -238,9 +238,9 @@ func TestStop(t *testing.T) {
 
 	log.Println("Stop!")
 	testTask.Stop()
-	time.Sleep(time.Duration(2) * LoopInterval)
 	course.forbidden = true
 	user.forbidden = true
+	time.Sleep(time.Duration(2) * LoopInterval)
 
 	running, succeeded, failed, lastError, elected := testTask.Statistics()
 	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", running, succeeded, failed, lastError, elected)
@@ -248,6 +248,43 @@ func TestStop(t *testing.T) {
 	t.Logf("User: ER = %d, L = %d\n", user.errorToMake, user.loginCount)
 	t.Logf("Course: R = %d, ER = %d, EL = %d\n", course.remaining, course.errorToMake, course.elected)
 
+	if running {
+		t.Fatalf("Still running.")
+	}
+	if elected {
+		t.Fatalf("Should not elected.")
+	}
+}
+
+func TestStopWhenRestarting(t *testing.T) {
+	MaxRetry = 5
+	LoopInterval = 3 * time.Second
+	log.Printf("TestStopWhenRestarting: Elect every %.2f seconds.", float32(LoopInterval/time.Second))
+
+	var testCount int32 = 5
+	var errorToMake int32 = 5
+
+	user := testUser{}
+	course := NewTestCourse(testCount, 0)
+	course.errorToMake = errorToMake
+	testTask := NewTask(&user, []Course{&course})
+	testTask.Start()
+	time.Sleep(time.Duration(MaxRetry+1)*LoopInterval + 1)
+	log.Println("Stop!")
+	testTask.Stop()
+	course.forbidden = true
+	user.forbidden = true
+	time.Sleep(time.Duration(2) * LoopInterval)
+
+	running, succeeded, failed, lastError, elected := testTask.Statistics()
+	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", running, succeeded, failed, lastError, elected)
+
+	t.Logf("User: ER = %d, L = %d\n", user.errorToMake, user.loginCount)
+	t.Logf("Course: R = %d, ER = %d, EL = %d\n", course.remaining, course.errorToMake, course.elected)
+
+	if user.loginCount > 1 {
+		t.Fatalf("Login for %d time(s).", user.loginCount)
+	}
 	if running {
 		t.Fatalf("Still running.")
 	}
