@@ -12,7 +12,6 @@ type LoginSession interface{}
 
 type Course interface {
 	Name() string
-	Description() string
 	Elect(LoginSession) (bool, error)
 }
 

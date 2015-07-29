@@ -34,10 +34,6 @@ func (t *testCourse) Name() string {
 	return "Test Course"
 }
 
-func (t *testCourse) Description() string {
-	return "Dummy courses for testing."
-}
-
 func (t *testCourse) Elect(k LoginSession) (bool, error) {
 	conc := atomic.AddInt32(&t.concurrent, 1)
 	if conc > 1 && t.noConcurrent {
