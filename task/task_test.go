@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/applepi-icpc/icarus"
 )
 
 type testCourse struct {
@@ -34,7 +36,7 @@ func (t *testCourse) Name() string {
 	return "Test Course"
 }
 
-func (t *testCourse) Elect(k LoginSession) (bool, error) {
+func (t *testCourse) Elect(k icarus.LoginSession) (bool, error) {
 	conc := atomic.AddInt32(&t.concurrent, 1)
 	if conc > 1 && t.noConcurrent {
 		log.Fatalf("2 goroutines electing at the same time!")
@@ -81,7 +83,7 @@ func (t *testUser) Name() string {
 	return "Test User"
 }
 
-func (t *testUser) Login() (LoginSession, error) {
+func (t *testUser) Login() (icarus.LoginSession, error) {
 	conc := atomic.AddInt32(&t.concurrent, 1)
 	if conc > 1 && t.noConcurrent {
 		log.Fatalf("2 goroutines electing at the same time!")
@@ -103,6 +105,10 @@ func (t *testUser) Login() (LoginSession, error) {
 	}
 }
 
+func (t *testUser) ListCourse() ([]icarus.CourseData, error) {
+	return nil, nil
+}
+
 func TestBasic(t *testing.T) {
 	MaxRetry = 5
 	LoopInterval = 3 * time.Second
@@ -112,7 +118,7 @@ func TestBasic(t *testing.T) {
 
 	user := testUser{}
 	course := NewTestCourse(testCount, 0)
-	testTask := NewTask(&user, []Course{&course})
+	testTask := NewTask(&user, []icarus.Course{&course})
 	testTask.Start()
 	time.Sleep(time.Duration(testCount+2) * LoopInterval)
 
@@ -148,7 +154,7 @@ func TestStartStop(t *testing.T) {
 
 	user := testUser{}
 	course := NewTestCourse(testCount, 0)
-	testTask := NewTask(&user, []Course{&course})
+	testTask := NewTask(&user, []icarus.Course{&course})
 	testTask.Start()
 	time.Sleep(time.Duration(rand.Float32()*100) * time.Millisecond)
 	testTask.Stop()
@@ -193,7 +199,7 @@ func TestRestart(t *testing.T) {
 	user := testUser{}
 	course := NewTestCourse(testCount, 0)
 	course.errorToMake = errorToMake
-	testTask := NewTask(&user, []Course{&course})
+	testTask := NewTask(&user, []icarus.Course{&course})
 	testTask.Start()
 	time.Sleep(time.Duration(testCount+errorToMake+5) * LoopInterval)
 
@@ -228,7 +234,7 @@ func TestStop(t *testing.T) {
 	var testCount int32 = 5
 	user := testUser{}
 	course := NewTestCourse(testCount, 0)
-	testTask := NewTask(&user, []Course{&course})
+	testTask := NewTask(&user, []icarus.Course{&course})
 	testTask.Start()
 	time.Sleep(time.Duration(2) * LoopInterval)
 
@@ -263,7 +269,7 @@ func TestStopWhenRestarting(t *testing.T) {
 	user := testUser{}
 	course := NewTestCourse(testCount, 0)
 	course.errorToMake = errorToMake
-	testTask := NewTask(&user, []Course{&course})
+	testTask := NewTask(&user, []icarus.Course{&course})
 	testTask.Start()
 	time.Sleep(time.Duration(MaxRetry+1)*LoopInterval + 1)
 	log.Println("Stop!")

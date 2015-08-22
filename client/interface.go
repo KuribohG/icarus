@@ -3,21 +3,22 @@ package client
 import (
 	"errors"
 
-	"github.com/applepi-icpc/icarus/task"
-	"github.com/applepi-icpc/icarus/task/storage"
+	"github.com/applepi-icpc/icarus"
 )
 
 const (
 	handleNameLengthLimit = 16
+)
 
+var (
 	ErrHandleNameTooLong = errors.New("Handle name too long")
 	ErrWrongLogin        = errors.New("Wrong username or password")
+	ErrHandleNotFound    = errors.New("Handle not found")
 )
 
 // Client has 2 versions,
 // one is in icarus and another one is in icarus-satellite.
-// they should be distinguished from build flag.
-// ("+build server" and "+build satellite")
+// they should be distinguished from importing different versions.
 //
 // Server part invokes dispatcher to send task,
 //   (most times the only needed work is
@@ -25,11 +26,16 @@ const (
 // and the satellite part do the actual work.
 type Client interface {
 	// Factory functions of actual (not abstract) users and courses.
-	MakeUser(userID string, password string) (task.User, error)
-	MakeCourse(name string, desc string, token string) (task.Course, error)
+	MakeUser(userID string, password string) (icarus.User, error)
+	MakeCourse(name string, desc string, token string) (icarus.Course, error)
+}
 
-	// List courses a user can elect.
-	ListCourse(task.User) ([]storage.CourseData, error)
+func MakeUserByData(c Client, data icarus.UserData) (icarus.User, error) {
+	return c.MakeUser(data.UserID, data.Password)
+}
+
+func MakeCourceByPassword(c Client, data icarus.CourseData) (icarus.Course, error) {
+	return c.MakeCourse(data.Name, data.Desc, data.Token)
 }
 
 func RegisterHandle(handle string, cli Client) error {
@@ -38,8 +44,10 @@ func RegisterHandle(handle string, cli Client) error {
 	}
 
 	// TODO
+	return nil
 }
 
 func GetHandle(handle string) (Client, error) {
 	// TODO
+	return nil, nil
 }

@@ -5,6 +5,6 @@ import (
 )
 
 var (
-	MaxRetry     int
-	LoopInterval time.Duration
+	MaxRetry     int           = 5
+	LoopInterval time.Duration = 5 * time.Second
 )

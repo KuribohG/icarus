@@ -5,6 +5,7 @@ import (
 	"flag"
 	"sync"
 
+	"github.com/applepi-icpc/icarus"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -25,31 +26,29 @@ func InitStorage() {
 	})
 }
 
-type UserData struct {
-	UserID   string `json:"userid"`
-	Password string `json:"password"`
-}
-type CourseData struct {
-	Name  string `json:"name"`
-	Desc  string `json:"desc"`
-	Token string `json:"token"`
-}
-type TaskData struct {
-	ID      int      `json:"id"`
-	Handle  string   `json:"handle"`
-	User    UserID   `json:"user"`
-	Courses []Course `json:"courses"`
-}
+func GetAllTasks() ([]icarus.TaskData, error) {
+	InitStorage()
+	rows, err := db.Query("SELECT task.id, task.handle, user.userid, user.password FROM task INNER JOIN user ON task.id = user.task_id")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-func GetAllTasks() ([]TaskData, error) {
-	// TODO
+	// res := make([]icarus.TaskData, 0)
+	for rows.Next() {
+		var entry icarus.TaskData
+		err = rows.Scan(&entry.ID, &entry.Handle, &entry.User.UserID, &entry.User.Password)
+	}
+	return nil, nil
 }
 
 // task.ID will be ignored.
-func CreateTask(task TaskData) (int, error) {
+func CreateTask(task icarus.TaskData) (int, error) {
 	// TODO
+	return 0, nil
 }
 
 func DeleteTask(ID int) error {
 	// TODO
+	return nil
 }

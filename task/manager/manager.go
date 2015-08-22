@@ -1,8 +1,8 @@
 package manager
 
 import (
+	"github.com/applepi-icpc/icarus"
 	"github.com/applepi-icpc/icarus/task"
-	"github.com/applepi-icpc/icarus/task/storage"
 )
 
 type Stat struct {
@@ -20,7 +20,7 @@ func InitManager() {
 }
 
 type TaskEntry struct {
-	Header   storage.TaskData
+	Header   icarus.TaskData
 	Instance task.Task
 }
 
@@ -30,26 +30,31 @@ func init() {
 	tasks = make(map[int]TaskEntry)
 }
 
-func CreateTask(task TaskData) (int, error) {
+func CreateTask(task icarus.TaskData) (int, error) {
 	// TODO:
 	// 1. Add to database (storage.CreateTask)
 	// 2. Add to tasks
+	return 0, nil
 }
 
 func DeleteTask(ID int) error {
 	// TODO:
 	// 1. Remove from data (storage.DeleteTask)
 	// 2. Remove from tasks
+	return nil
 }
 
-func GetTask(ID int) (task.Task, error) {
+func GetTask(ID int) (*task.Task, error) {
 	// TODO
+	return nil, nil
 }
 
-func GetAllTasks() []task.Task {
+func GetAllTasks() []*task.Task {
 	// TODO
+	return nil
 }
 
-func ListTask() []storage.TaskData {
+func ListTask() []icarus.TaskData {
 	// TODO
+	return nil
 }

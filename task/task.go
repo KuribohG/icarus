@@ -6,30 +6,19 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/applepi-icpc/icarus"
 )
 
-type LoginSession interface{}
-
-type Course interface {
-	Name() string
-	Elect(LoginSession) (bool, error)
-}
-
-type User interface {
-	Name() string
-	Login() (LoginSession, error)
-}
-
 type Task struct {
-	user    User
-	courses []Course // A list concatenated by "or"
+	user    icarus.User
+	courses []icarus.Course // A list concatenated by "or"
 
 	mutex        sync.Mutex
 	running      bool
 	currentRunID int
 
 	login   bool
-	session LoginSession
+	session icarus.LoginSession
 
 	succeeded int64
 	failed    int64
@@ -38,7 +27,7 @@ type Task struct {
 }
 
 // Make a new task.
-func NewTask(user User, courses []Course) *Task {
+func NewTask(user icarus.User, courses []icarus.Course) *Task {
 	return &Task{
 		user:    user,
 		courses: courses,
@@ -46,12 +35,12 @@ func NewTask(user User, courses []Course) *Task {
 }
 
 // Get this task's login user.
-func (t *Task) User() User {
+func (t *Task) User() icarus.User {
 	return t.user
 }
 
 // Get this task's candidate courses.
-func (t *Task) Courses() []Course {
+func (t *Task) Courses() []icarus.Course {
 	return t.courses
 }
 
@@ -94,7 +83,7 @@ func (t *Task) runOnce() bool {
 			wg.Add(1)
 
 			// Elect a course
-			go func(c Course) {
+			go func(c icarus.Course) {
 				defer wg.Done()
 				elected, err := c.Elect(t.session)
 				if err != nil {
