@@ -34,7 +34,7 @@ func MakeUserByData(c Client, data icarus.UserData) (icarus.User, error) {
 	return c.MakeUser(data.UserID, data.Password)
 }
 
-func MakeCourceByPassword(c Client, data icarus.CourseData) (icarus.Course, error) {
+func MakeCourceByData(c Client, data icarus.CourseData) (icarus.Course, error) {
 	return c.MakeCourse(data.Name, data.Desc, data.Token)
 }
 
@@ -47,7 +47,8 @@ func RegisterHandle(handle string, cli Client) error {
 	return nil
 }
 
-func GetHandle(handle string) (Client, error) {
+// This function will panic if no such handle can be found.
+func GetHandle(handle string) Client {
 	// TODO
-	return nil, nil
+	return nil
 }

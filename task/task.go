@@ -171,9 +171,9 @@ func (t *Task) Restart() {
 }
 
 // Get this task's statistics.
-func (t *Task) Statistics() (running bool, succeeded int64, failed int64, lastError string, elected bool) {
+func (t *Task) Statistics() icarus.Stat {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	return t.running, t.succeeded, t.failed, t.lastError, t.elected
+	return icarus.Stat{t.running, t.succeeded, t.failed, t.lastError, t.elected}
 }

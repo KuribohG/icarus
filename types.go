@@ -26,3 +26,10 @@ type TaskData struct {
 	User    UserData     `json:"user"`
 	Courses []CourseData `json:"courses"`
 }
+type Stat struct {
+	Running   bool   `json:"running"`
+	Succeeded int64  `json:"succeeded"`
+	Failed    int64  `json:"failed"`
+	LastError string `json:"last_error"`
+	Elected   bool   `json:"elected"`
+}

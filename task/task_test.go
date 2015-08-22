@@ -122,8 +122,8 @@ func TestBasic(t *testing.T) {
 	testTask.Start()
 	time.Sleep(time.Duration(testCount+2) * LoopInterval)
 
-	running, succeeded, failed, lastError, elected := testTask.Statistics()
-	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", running, succeeded, failed, lastError, elected)
+	s := testTask.Statistics()
+	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", s.Running, s.Succeeded, s.Failed, s.LastError, s.Elected)
 
 	t.Logf("User: ER = %d, L = %d\n", user.errorToMake, user.loginCount)
 	t.Logf("Course: R = %d, ER = %d, EL = %d\n", course.remaining, course.errorToMake, course.elected)
@@ -137,10 +137,10 @@ func TestBasic(t *testing.T) {
 	if course.remaining != 0 {
 		t.Fatalf("WTF...Remaining %d != 0.", course.remaining)
 	}
-	if running {
+	if s.Running {
 		t.Fatalf("Still running.")
 	}
-	if !elected {
+	if !s.Elected {
 		t.Fatalf("Should elected.")
 	}
 }
@@ -165,8 +165,8 @@ func TestStartStop(t *testing.T) {
 	user.noConcurrent = true
 	time.Sleep(time.Duration(testCount+2) * LoopInterval)
 
-	running, succeeded, failed, lastError, elected := testTask.Statistics()
-	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", running, succeeded, failed, lastError, elected)
+	s := testTask.Statistics()
+	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", s.Running, s.Succeeded, s.Failed, s.LastError, s.Elected)
 
 	t.Logf("User: ER = %d, L = %d\n", user.errorToMake, user.loginCount)
 	t.Logf("Course: R = %d, ER = %d, EL = %d\n", course.remaining, course.errorToMake, course.elected)
@@ -180,10 +180,10 @@ func TestStartStop(t *testing.T) {
 	if course.remaining != 0 {
 		t.Fatalf("WTF...Remaining %d != 0.", course.remaining)
 	}
-	if running {
+	if s.Running {
 		t.Fatalf("Still running.")
 	}
-	if !elected {
+	if !s.Elected {
 		t.Fatalf("Should elected.")
 	}
 }
@@ -203,8 +203,8 @@ func TestRestart(t *testing.T) {
 	testTask.Start()
 	time.Sleep(time.Duration(testCount+errorToMake+5) * LoopInterval)
 
-	running, succeeded, failed, lastError, elected := testTask.Statistics()
-	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", running, succeeded, failed, lastError, elected)
+	s := testTask.Statistics()
+	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", s.Running, s.Succeeded, s.Failed, s.LastError, s.Elected)
 
 	t.Logf("User: ER = %d, L = %d\n", user.errorToMake, user.loginCount)
 	t.Logf("Course: R = %d, ER = %d, EL = %d\n", course.remaining, course.errorToMake, course.elected)
@@ -218,10 +218,10 @@ func TestRestart(t *testing.T) {
 	if course.remaining != 0 {
 		t.Fatalf("WTF...Remaining %d != 0.", course.remaining)
 	}
-	if running {
+	if s.Running {
 		t.Fatalf("Still running.")
 	}
-	if !elected {
+	if !s.Elected {
 		t.Fatalf("Should elected.")
 	}
 }
@@ -244,16 +244,16 @@ func TestStop(t *testing.T) {
 	user.forbidden = true
 	time.Sleep(time.Duration(2) * LoopInterval)
 
-	running, succeeded, failed, lastError, elected := testTask.Statistics()
-	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", running, succeeded, failed, lastError, elected)
+	s := testTask.Statistics()
+	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", s.Running, s.Succeeded, s.Failed, s.LastError, s.Elected)
 
 	t.Logf("User: ER = %d, L = %d\n", user.errorToMake, user.loginCount)
 	t.Logf("Course: R = %d, ER = %d, EL = %d\n", course.remaining, course.errorToMake, course.elected)
 
-	if running {
+	if s.Running {
 		t.Fatalf("Still running.")
 	}
-	if elected {
+	if s.Elected {
 		t.Fatalf("Should not elected.")
 	}
 }
@@ -278,8 +278,8 @@ func TestStopWhenRestarting(t *testing.T) {
 	user.forbidden = true
 	time.Sleep(time.Duration(2) * LoopInterval)
 
-	running, succeeded, failed, lastError, elected := testTask.Statistics()
-	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", running, succeeded, failed, lastError, elected)
+	s := testTask.Statistics()
+	t.Logf("R = %t, S/F = %d/%d, LE = \"%s\", E = %t\n", s.Running, s.Succeeded, s.Failed, s.LastError, s.Elected)
 
 	t.Logf("User: ER = %d, L = %d\n", user.errorToMake, user.loginCount)
 	t.Logf("Course: R = %d, ER = %d, EL = %d\n", course.remaining, course.errorToMake, course.elected)
@@ -287,10 +287,10 @@ func TestStopWhenRestarting(t *testing.T) {
 	if user.loginCount > 1 {
 		t.Fatalf("Login for %d time(s).", user.loginCount)
 	}
-	if running {
+	if s.Running {
 		t.Fatalf("Still running.")
 	}
-	if elected {
+	if s.Elected {
 		t.Fatalf("Should not elected.")
 	}
 }
