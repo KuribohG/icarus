@@ -7,13 +7,16 @@ import (
 )
 
 const (
-	handleNameLengthLimit = 16
+	handleNameLengthLimit = 128
 )
+
+var registered map[string]Client
 
 var (
 	ErrHandleNameTooLong = errors.New("Handle name too long")
 	ErrWrongLogin        = errors.New("Wrong username or password")
 	ErrHandleNotFound    = errors.New("Handle not found")
+	ErrHandleExists      = errors.New("Handle exists")
 )
 
 // Client has 2 versions,
@@ -30,6 +33,10 @@ type Client interface {
 	MakeCourse(name string, desc string, token string) (icarus.Course, error)
 }
 
+func init() {
+	registered = make(map[string]Client)
+}
+
 func MakeUserByData(c Client, data icarus.UserData) (icarus.User, error) {
 	return c.MakeUser(data.UserID, data.Password)
 }
@@ -43,12 +50,27 @@ func RegisterHandle(handle string, cli Client) error {
 		return ErrHandleNameTooLong
 	}
 
-	// TODO
+	_, ok := registered[handle]
+	if ok {
+		return ErrHandleExists
+	}
+
+	registered[handle] = cli
 	return nil
 }
 
-// This function will panic if no such handle can be found.
-func GetHandle(handle string) Client {
-	// TODO
-	return nil
+func RegisteredHandle() map[string]Client {
+	res := make(map[string]Client)
+	for k, v := range registered {
+		res[k] = v
+	}
+	return res
+}
+
+func GetHandle(handle string) (Client, error) {
+	cli, ok := registered[handle]
+	if !ok {
+		return nil, ErrHandleNotFound
+	}
+	return cli, nil
 }
