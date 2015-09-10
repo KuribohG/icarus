@@ -3,13 +3,12 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"math/rand"
 	"net/http"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/applepi-icpc/icarus/client"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -33,8 +32,13 @@ var PushTimeout = map[dispatcher.SubtaskType]time.Duration{
 var PullTimeout = 30 * time.Second
 
 var (
-	ErrTimeout = errors.New("subtask timeout")
+	ErrFailedToLogin = errors.New("failed to login") // returned by concrete client
+	ErrInvalidData   = errors.New("invalid data")    // returned by concrete client
+	ErrWrongType     = errors.New("wrong session type")
+	ErrTimeout       = errors.New("subtask timeout")
 )
+
+var randomizer = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 type Dispatcher struct {
 	mux *http.ServeMux
@@ -42,18 +46,20 @@ type Dispatcher struct {
 	mu  sync.RWMutex
 	qmu sync.Mutex
 
-	queueCapacity int
+	queueCapacity     int
+	avaliableHandlers []string
 
 	queue  map[string]chan *dispatcher.Subtask      // Handler -> Queue
 	result map[int64]chan *dispatcher.SubtaskResult // ID -> Result
 	cipher map[int64][]byte                         // ID -> Cipher
 }
 
-func NewDispatcher(capacity int) *Dispatcher {
+func NewDispatcher(capacity int, avaliableHandlers []string) *Dispatcher {
 	t := &Dispatcher{
 		mux: http.NewServeMux(),
 
-		queueCapacity: capacity,
+		queueCapacity:     capacity,
+		avaliableHandlers: avaliableHandlers,
 
 		queue:  make(map[string]chan *dispatcher.Subtask),
 		result: make(map[int64]chan *dispatcher.SubtaskResult),
@@ -70,17 +76,20 @@ func NewDispatcher(capacity int) *Dispatcher {
 		}
 
 		// filter out unsupported handles
-		registered := client.RegisteredHandle()
 		rawAccepts := strings.Split(request.Accepts, ",")
+		accHash := make(map[string]bool)
+		for _, v := range t.avaliableHandlers {
+			accHash[v] = true
+		}
 		accepts := make([]string, 0)
 		for _, v := range rawAccepts {
-			_, ok := registered[v]
+			_, ok := accHash[v]
 			if ok {
 				accepts = append(accepts, v)
 			}
 		}
 
-		subtask, err := t.PullSubtask(accepts)
+		subtask, err := t.pullSubtask(accepts)
 		if err != nil {
 			if err != ErrTimeout {
 				log.Errorf("Dispatcher: error getting subtask: %s", err.Error())
@@ -130,7 +139,7 @@ func NewDispatcher(capacity int) *Dispatcher {
 		key, ok := t.cipher[resp.TaskID]
 		if !ok {
 			// HTTP 410 (Gone): Timeout, or no such task ID exists.
-			http.Error(w, err.Error(), http.StatusGone)
+			http.Error(w, "", http.StatusGone)
 			return
 		}
 
@@ -152,7 +161,7 @@ func NewDispatcher(capacity int) *Dispatcher {
 		t.mu.RLock()
 		ch, ok := t.result[resp.TaskID]
 		if !ok {
-			http.Error(w, err.Error(), http.StatusGone)
+			http.Error(w, "", http.StatusGone)
 			return
 		}
 		ch <- &tres
@@ -183,6 +192,8 @@ func (d *Dispatcher) ensureQueue(c string) (queue chan *dispatcher.Subtask) {
 func (d *Dispatcher) PushSubtask(s *dispatcher.Subtask) <-chan *dispatcher.SubtaskResult {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+
+	s.ID = randomizer.Int63()
 
 	q := d.ensureQueue(s.Handler)
 	timeout := PushTimeout[s.Type]
@@ -230,7 +241,7 @@ func (d *Dispatcher) RunSubtask(s *dispatcher.Subtask) *dispatcher.SubtaskResult
 	return <-ch
 }
 
-func (d *Dispatcher) PullSubtask(accepts []string) (*dispatcher.Subtask, error) {
+func (d *Dispatcher) pullSubtask(accepts []string) (*dispatcher.Subtask, error) {
 	tc := time.After(PullTimeout)
 	cases := make([]reflect.SelectCase, len(accepts)+1)
 	var timeoutIdx = len(accepts)

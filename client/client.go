@@ -2,6 +2,7 @@ package client
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/applepi-icpc/icarus"
 )
@@ -14,14 +15,11 @@ var registered map[string]Client
 
 var (
 	ErrHandleNameTooLong = errors.New("Handle name too long")
-	ErrWrongLogin        = errors.New("Wrong username or password")
 	ErrHandleNotFound    = errors.New("Handle not found")
 	ErrHandleExists      = errors.New("Handle exists")
 )
 
-// Client has 2 versions,
-// one is in icarus and another one is in icarus-satellite.
-// they should be distinguished from importing different versions.
+// Client is in icarus (server part).
 //
 // Server part invokes dispatcher to send task,
 //   (most times the only needed work is
@@ -33,8 +31,12 @@ type Client interface {
 	MakeCourse(name string, desc string, token string) (icarus.Course, error)
 }
 
-func init() {
-	registered = make(map[string]Client)
+var clientIniter sync.Once
+
+func initInterface() {
+	clientIniter.Do(func() {
+		registered = make(map[string]Client)
+	})
 }
 
 func MakeUserByData(c Client, data icarus.UserData) (icarus.User, error) {
@@ -46,6 +48,7 @@ func MakeCourceByData(c Client, data icarus.CourseData) (icarus.Course, error) {
 }
 
 func RegisterHandle(handle string, cli Client) error {
+	initInterface()
 	if len(handle) > handleNameLengthLimit {
 		return ErrHandleNameTooLong
 	}
@@ -60,6 +63,7 @@ func RegisterHandle(handle string, cli Client) error {
 }
 
 func RegisteredHandle() map[string]Client {
+	initInterface()
 	res := make(map[string]Client)
 	for k, v := range registered {
 		res[k] = v
@@ -67,7 +71,17 @@ func RegisteredHandle() map[string]Client {
 	return res
 }
 
+func RegisteredList() []string {
+	initInterface()
+	res := make([]string, 0)
+	for k, _ := range registered {
+		res = append(res, k)
+	}
+	return res
+}
+
 func GetHandle(handle string) (Client, error) {
+	initInterface()
 	cli, ok := registered[handle]
 	if !ok {
 		return nil, ErrHandleNotFound
