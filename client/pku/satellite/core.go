@@ -1,11 +1,6 @@
 package pku
 
-import (
-	"errors"
-	"fmt"
-	"strconv"
-	"strings"
-)
+import "fmt"
 
 const (
 	iaaaRoot  = "https://iaaa.pku.edu.cn"
@@ -21,29 +16,6 @@ func (p PKUWorker) Login(data []string) []string {
 	} else {
 		return []string{"succeeded", jsid}
 	}
-}
-
-// Index, Seq, UBound
-func enToken(a string, b string, c int) string {
-	conv := func(s string) string {
-		return strings.Replace(s, "$", "$$", -1)
-	}
-	return fmt.Sprintf("%s$#%s$#%d", conv(a), conv(b), c)
-}
-
-func deToken(s string) (string, string, int, error) {
-	res := strings.Split(s, "$#")
-	if len(res) != 3 {
-		return "", "", 0, errors.New("wrong amount of parts in token")
-	}
-	for i, v := range res {
-		res[i] = strings.Replace(v, "$$", "$", -1)
-	}
-	u, err := strconv.Atoi(res[2])
-	if err != nil {
-		return "", "", 0, err
-	}
-	return res[0], res[1], u, nil
 }
 
 func (p PKUWorker) ListCourse(data []string) []string {
@@ -76,7 +48,36 @@ func (p PKUWorker) ListCourse(data []string) []string {
 	for _, v := range res {
 		ret = append(ret, v.Name)
 		ret = append(ret, fmt.Sprintf("%s 班: %s, %s", v.GroupID, v.Teacher, v.Msg))
-		ret = append(ret, enToken(v.Index, v.Seq, v.UBound))
+		ret = append(ret, EnToken(v.Index, v.Seq, v.UBound))
 	}
 	return ret
+}
+
+func (p PKUWorker) Elect(data []string) []string {
+	if len(data) < 2 {
+		return []string{"datum are not sufficient"}
+	}
+	token := data[0]
+	jsid := data[1]
+
+	index, seq, ubound, err := DeToken(token)
+	if err != nil {
+		return []string{err.Error()}
+	}
+
+	electable, err := Refresh(jsid, index, seq, ubound)
+	if err != nil {
+		return []string{err.Error()}
+	}
+	if electable {
+		res, err := Supplement(jsid, index, seq)
+		if err != nil {
+			return []string{err.Error()}
+		}
+		if res {
+			return []string{"succeeded"}
+		}
+	}
+
+	return []string{"full"}
 }

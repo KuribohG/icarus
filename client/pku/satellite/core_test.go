@@ -18,11 +18,16 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestLogin(t *testing.T) {
+func TestLoginAndCaptcha(t *testing.T) {
 	jsid, _, err := pku.LoginHelper([]string{*flagUserID, *flagPassword})
 	if err != nil {
 		t.Fatalf("Login error: %s", err.Error())
 	} else {
 		t.Logf("JSESSIONID: %s", jsid)
+	}
+
+	err = pku.FetchAndIdentify(jsid)
+	if err != nil {
+		t.Fatalf("Failed to pass captcha: %s", err.Error())
 	}
 }

@@ -48,6 +48,9 @@ func LoginHelper(data []string) (string, string, error) {
 	v.Set("password", password)
 	v.Set("redirUrl", "http://elective.pku.edu.cn:80/elective2008/agent4Iaaa.jsp/../ssoLogin.do")
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/iaaa/oauthlogin.do", iaaaRoot), strings.NewReader(v.Encode()))
+	if err != nil {
+		panic(err)
+	}
 	req.Header.Set("Cookie", fmt.Sprintf("JSESSIONID=%s", jsessionid))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
@@ -95,6 +98,9 @@ func LoginHelper(data []string) (string, string, error) {
 
 	// Step: Activate
 	req, err = http.NewRequest("GET", fmt.Sprintf("%s/elective2008/edu/pku/stu/elective/controller/supplement/SupplyCancel.do", electRoot), strings.NewReader(""))
+	if err != nil {
+		panic(err)
+	}
 	req.Header.Set("Cookie", fmt.Sprintf("JSESSIONID=%s", jsessionid))
 	res, err = client.Do(req)
 	if err != nil {

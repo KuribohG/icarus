@@ -3,6 +3,7 @@ package task
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -15,7 +16,7 @@ type Task struct {
 
 	mutex        sync.Mutex
 	running      bool
-	currentRunID int
+	currentRunID int32
 
 	login   bool
 	session icarus.LoginSession
@@ -89,6 +90,11 @@ func (t *Task) runOnce() bool {
 				if err != nil {
 					noError = false
 					t.logError(err, fmt.Sprintf("%s: %s", t.user.Name(), c.Name()))
+
+					if err == ErrSessionExpired {
+						t.Restart()
+					}
+
 					return
 				}
 
@@ -109,9 +115,9 @@ func (t *Task) runOnce() bool {
 	}
 }
 
-func (t *Task) run(runID int) {
+func (t *Task) run(runID int32) {
 	retried := 0
-	for t.running && runID == t.currentRunID {
+	for t.running && runID == atomic.LoadInt32(&t.currentRunID) {
 		endOfTurn := time.After(LoopInterval)
 
 		// Do major work

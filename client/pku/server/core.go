@@ -9,6 +9,7 @@ import (
 	"github.com/applepi-icpc/icarus/client"
 	"github.com/applepi-icpc/icarus/dispatcher"
 	"github.com/applepi-icpc/icarus/dispatcher/server"
+	"github.com/applepi-icpc/icarus/task"
 )
 
 type PKUClient struct{}
@@ -76,12 +77,16 @@ func (pu PKUUser) ListCourse() ([]icarus.CourseData, error) {
 		//     + Desc
 		//     + Token
 
-		if len(res.Data) < 2 {
+		if len(res.Data) < 1 {
 			log.Warnf("Client PKU: Invalid course list: %v", res.Data)
 			return nil, server.ErrInvalidData
 		}
 		if res.Data[0] != "succeeded" {
 			return nil, errors.New(res.Data[0])
+		}
+		if len(res.Data) < 2 {
+			log.Warnf("Client PKU: Invalid course list: %v", res.Data)
+			return nil, server.ErrInvalidData
 		}
 		count, err := strconv.Atoi(res.Data[1])
 		if err != nil {
@@ -111,7 +116,7 @@ func (pc PKUCourse) Name() string {
 func (pc PKUCourse) Elect(session icarus.LoginSession) (bool, error) {
 	s, ok := session.(string)
 	if !ok {
-		log.Warnf("Client PKU: Wrong session type!")
+		log.Warnf("Client PKU: Wrong session type! Session should be a JSESSIONID string.")
 		return false, server.ErrWrongType
 	}
 
@@ -132,8 +137,10 @@ func (pc PKUCourse) Elect(session icarus.LoginSession) (bool, error) {
 		}
 		if res.Data[0] == "succeeded" {
 			return true, nil
-		} else if res.Data[0] == "failed" {
+		} else if res.Data[0] == "full" {
 			return false, nil
+		} else if res.Data[0] == "session expired" {
+			return false, task.ErrSessionExpired
 		} else {
 			return false, errors.New(res.Data[0])
 		}

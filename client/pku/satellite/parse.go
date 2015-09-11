@@ -136,6 +136,9 @@ func parseList(s string) (res []PKUClass, err error) {
 
 func getOriginalPage(pagenum int, jsessionid string) (string, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/elective2008/edu/pku/stu/elective/controller/supplement/supplement.jsp?netui_pagesize=electableListGrid%%3B20&netui_row=electableListGrid%%3B%d", electRoot, pagenum*20), strings.NewReader(""))
+	if err != nil {
+		panic(err)
+	}
 	req.Header.Set("Cookie", fmt.Sprintf("JSESSIONID=%s", jsessionid))
 	client := &http.Client{}
 	res, err := client.Do(req)
