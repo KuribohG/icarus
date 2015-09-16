@@ -13,18 +13,19 @@ type User interface {
 
 type UserData struct {
 	UserID   string `json:"userid"`
-	Password string `json:"password"`
+	Password string `json:"password,omitempty"`
 }
 type CourseData struct {
 	Name  string `json:"name"`
 	Desc  string `json:"desc"`
-	Token string `json:"token"`
+	Token string `json:"token,omitempty"`
 }
 type TaskData struct {
 	ID      int          `json:"id"`
 	Handle  string       `json:"handle"`
 	User    UserData     `json:"user"`
 	Courses []CourseData `json:"courses"`
+	Stat    Stat         `json:"stat,omitempty"`
 }
 type Stat struct {
 	Running   bool   `json:"running"`

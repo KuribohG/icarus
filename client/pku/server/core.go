@@ -55,6 +55,7 @@ func (pu PKUUser) Login() (icarus.LoginSession, error) {
 				log.Warnf("Client PKU: Invalid login data: %v", res.Data)
 				return nil, server.ErrInvalidData
 			}
+			log.Infof("Client PKU: Successfully login.")
 			return PKULoginSession(res.Data[1]), nil
 		}
 	}
@@ -114,7 +115,7 @@ func (pc PKUCourse) Name() string {
 }
 
 func (pc PKUCourse) Elect(session icarus.LoginSession) (bool, error) {
-	s, ok := session.(string)
+	s, ok := session.(PKULoginSession)
 	if !ok {
 		log.Warnf("Client PKU: Wrong session type! Session should be a JSESSIONID string.")
 		return false, server.ErrWrongType
@@ -123,7 +124,7 @@ func (pc PKUCourse) Elect(session icarus.LoginSession) (bool, error) {
 	res := server.DefaultDispatcher.RunSubtask(&dispatcher.Subtask{
 		Handler: "pku",
 		Type:    dispatcher.SubtaskElect,
-		Data:    []string{pc.token, s},
+		Data:    []string{pc.token, string(s)},
 	})
 	if res.Error != nil {
 		return false, res.Error
@@ -136,8 +137,10 @@ func (pc PKUCourse) Elect(session icarus.LoginSession) (bool, error) {
 			return false, server.ErrInvalidData
 		}
 		if res.Data[0] == "succeeded" {
+			log.Infof("Client PKU: Elected!")
 			return true, nil
 		} else if res.Data[0] == "full" {
+			log.Infof("Client PKU: Full.")
 			return false, nil
 		} else if res.Data[0] == "session expired" {
 			return false, task.ErrSessionExpired

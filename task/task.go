@@ -72,6 +72,7 @@ func (t *Task) runOnce() bool {
 	if !t.login {
 		session, err := t.user.Login()
 		if err != nil {
+			t.logError(err, fmt.Sprintf("%s", t.user.Name()))
 			return false
 		}
 		t.login = true
@@ -118,7 +119,7 @@ func (t *Task) runOnce() bool {
 func (t *Task) run(runID int32) {
 	retried := 0
 	for t.running && runID == atomic.LoadInt32(&t.currentRunID) {
-		endOfTurn := time.After(LoopInterval)
+		// endOfTurn := time.After(LoopInterval)
 
 		// Do major work
 		ok := t.runOnce()
@@ -138,7 +139,11 @@ func (t *Task) run(runID int32) {
 			}
 		}()
 
-		<-endOfTurn
+		// This way will cause a interval too short and crush a query.
+		// <-endOfTurn
+
+		// A more naive way.
+		time.Sleep(LoopInterval)
 	}
 }
 

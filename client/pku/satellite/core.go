@@ -1,6 +1,10 @@
 package pku
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/applepi-icpc/icarus/client"
+)
 
 const (
 	iaaaRoot  = "https://iaaa.pku.edu.cn"
@@ -44,7 +48,7 @@ func (p PKUWorker) ListCourse(data []string) []string {
 	}
 
 	ret := []string{"succeeded"}
-	ret = append(ret, fmt.Sprintf("%d", len(ret)))
+	ret = append(ret, fmt.Sprintf("%d", len(res)))
 	for _, v := range res {
 		ret = append(ret, v.Name)
 		ret = append(ret, fmt.Sprintf("%s 班: %s, %s", v.GroupID, v.Teacher, v.Msg))
@@ -80,4 +84,10 @@ func (p PKUWorker) Elect(data []string) []string {
 	}
 
 	return []string{"full"}
+}
+
+func init() {
+	if err := client.RegisterWorker("pku", PKUWorker{}); err != nil {
+		panic(err)
+	}
 }

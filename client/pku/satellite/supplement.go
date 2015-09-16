@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/qiniu/log"
+	log "github.com/Sirupsen/logrus"
 )
 
 var (

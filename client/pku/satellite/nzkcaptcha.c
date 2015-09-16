@@ -1,7 +1,7 @@
-#include <cstdio>
-#include <cstring>
-#include <cmath>
-#include <algorithm>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 #include "nzkcaptcha.h"
 
@@ -10,21 +10,24 @@ const int char_imbit[60][20] = {{1017, 508, 1276, 1660, 1852, 1948, 1985, 2019},
 const int char_h[60] = {13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 16, 13, 13, 13, 13, 13, 13, 13, 13, 13, 12, 13, 13, 13, 13, 10, 13, 10, 13, 10, 13, 14, 13, 13, 17, 13, 10, 10, 14, 14, 10, 10, 12, 10, 10, 10, 10, 14, 10};
 const int char_w[60] = {8, 8, 9, 8, 9, 8, 9, 9, 11, 8, 9, 10, 8, 7, 10, 10, 7, 10, 8, 13, 10, 8, 10, 7, 10, 9, 11, 15, 10, 10, 8, 8, 8, 7, 8, 7, 6, 8, 8, 2, 5, 9, 14, 8, 8, 8, 5, 6, 5, 8, 9, 13, 8, 9, 7};
 
-struct recog_t {
+typedef struct {
     int x, y; char ch;
-};
-bool operator < (recog_t a, recog_t b) {
-    return a.x < b.x;
+} recog_t;
+int less (const void* a, const void* b) {
+    recog_t *aa = (recog_t *)a;
+    recog_t *bb = (recog_t *)b;
+    return aa->x - bb->x;
 }
 
 void identify(int h, int w, int *imbit, char *res) {
+    int i, j, k, l;
     int num = strlen(char_sym);
-    for (int j = 0; j < w; j++)
-        for (int i = 0; i < h; i++)
+    for (j = 0; j < w; j++)
+        for (i = 0; i < h; i++)
             if (!(imbit[j] & 1<<i)) {
                 double black = 0, cnt = 0;
-                for (int k = -3; k <= 3; k++)
-                    for (int l = -3; l <= 3; l++)
+                for (k = -3; k <= 3; k++)
+                    for (l = -3; l <= 3; l++)
                         if ((k != 0 || l != 0) && i+k >= 0 && i+k < h && j+l >= 0 && j+l < w) {
                             cnt += 1 / exp(sqrt(k*k+l*l));
                             if (!(imbit[j+l] & 1<<(i+k)))
@@ -33,9 +36,8 @@ void identify(int h, int w, int *imbit, char *res) {
                 if (black < cnt * 0.2)
                     imbit[j] |= 1<<i;
             }
-    double *pool = new double[h*w*num];
+    double *pool = (double *)malloc(sizeof(double) * h * w * num);
 
-    // double (*f)[w][num] = (double (*)[w][num]) pool;
     typedef double (*TPOOL)[w][num];
     TPOOL f = (TPOOL)pool;
     
@@ -45,9 +47,9 @@ void identify(int h, int w, int *imbit, char *res) {
     for (; turns < 4; turns++) {
         double valmax = -100;
         int maxi, maxj, maxk = -1;
-        for (int i = 0; i < h; i++)
-            for (int j = 0; j < w; j++)
-                for (int k = 0; k < num; k++) {
+        for (i = 0; i < h; i++)
+            for (j = 0; j < w; j++)
+                for (k = 0; k < num; k++) {
                     int chh = char_h[k], chw = char_w[k];
                     int tot = chh * chw;
                     if (i+chh > h) chh = h-i;
@@ -56,7 +58,7 @@ void identify(int h, int w, int *imbit, char *res) {
                     double val;
                     if (turns == 0 || (i+chh > lasti && i < lasti+lasth && j+chw > lastj && j < lastj+lastw)) {
                         val = 0;
-                        for (int l = 0; l < chw; l++) {
+                        for (l = 0; l < chw; l++) {
                             int bit = imbit[j+l] >> i & ((1<<chh)-1);
                             int chbit = char_imbit[k][l];
                             val -= 3.0 * __builtin_popcount(bit & ~chbit);
@@ -76,13 +78,13 @@ void identify(int h, int w, int *imbit, char *res) {
         int i = maxi, j = maxj, k = maxk, chh = char_h[k], chw = char_w[k];
         if (i+chh > h) chh = h-i;
         if (j+chw > w) chw = w-j;
-        for (int l = 0; l < chw; l++)
+        for (l = 0; l < chw; l++)
             imbit[j+l] |= (~char_imbit[k][l] & (1<<chh)-1) << i;
         lasti = i, lastj = j, lasth = chh, lastw = chw;
     }
-    std::sort(recog, recog + turns);
-    for (int i = 0; i < turns; i++)
+    qsort(recog, turns, sizeof(recog_t), less);
+    for (i = 0; i < turns; i++)
         res[i] = recog[i].ch;
     res[turns] = 0;
-    delete [] pool;
+    free(pool);
 }

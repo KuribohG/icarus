@@ -26,3 +26,8 @@ _testmain.go
 .DS_Store
 
 project.html
+
+# Target
+cmd/icarus-personal/icarus-personal
+cmd/icarus-satellite/icarus-satellite
+cmd/icarus/icarus

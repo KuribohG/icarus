@@ -19,7 +19,7 @@ var (
 	reTime    = regexp.MustCompile(`(?i)<td class="datagrid"><span style="width: 200">(.*?)</span>`)
 	reCommand = regexp.MustCompile(`(?i)<td class="datagrid" align="center"><a (.)`)
 	reElect   = regexp.MustCompile(`(?i)"/elective2008/edu/pku/stu/elective/controller/supplement/electSupplement.do\?index=(.*?)&amp;seq=(.*?)"`)
-	reRefresh = regexp.MustCompile(`(?i)javascript:refreshLimit\('.*?','.*?','.*?','(.*?)','(.*?)','.*?'\);`)
+	reRefresh = regexp.MustCompile(`(?i)refreshLimit\('.*?','.*?','.*?','(.*?)','(.*?)','.*?'\);`)
 	rePage    = regexp.MustCompile(`(?i)<td colspan="10" valign="baseline">Page \d+? of (\d+?)`)
 )
 

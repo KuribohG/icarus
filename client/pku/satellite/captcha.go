@@ -1,12 +1,14 @@
 package pku
 
-// #cgo CXXFLAGS: -O3
+// #cgo CFLAGS: -O3
+// #cgo LDFLAGS: -lm
 // #include "nzkcaptcha.h"
 import "C"
 import (
 	"errors"
 	"fmt"
 	"image"
+	_ "image/jpeg"
 	"io/ioutil"
 	"net/http"
 	"strings"

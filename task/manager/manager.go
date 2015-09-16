@@ -26,7 +26,10 @@ func init() {
 
 // this function only generate a task and add it into `tasks`
 func addTask(taskdata icarus.TaskData) (t *task.Task, err error) {
-	c := client.GetHandle(taskdata.Handle)
+	c, err := client.GetHandle(taskdata.Handle)
+	if err != nil {
+		return
+	}
 	var user icarus.User
 	user, err = client.MakeUserByData(c, taskdata.User)
 	if err != nil {
@@ -104,7 +107,9 @@ func GetTaskData(ID int) (icarus.TaskData, error) {
 func ListTasksData() []icarus.TaskData {
 	res := make([]icarus.TaskData, 0)
 	for _, entry := range tasks {
-		res = append(res, entry.Header)
+		hdr := entry.Header
+		hdr.Stat = entry.Instance.Statistics()
+		res = append(res, hdr)
 	}
 	return res
 }
