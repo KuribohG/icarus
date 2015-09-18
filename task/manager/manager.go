@@ -2,6 +2,7 @@ package manager
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/applepi-icpc/icarus"
 	"github.com/applepi-icpc/icarus/client"
@@ -14,6 +15,7 @@ type TaskEntry struct {
 	Instance *task.Task
 }
 
+var mu sync.Mutex
 var tasks map[int]TaskEntry
 
 var (
@@ -55,6 +57,9 @@ func addTask(taskdata icarus.TaskData) (t *task.Task, err error) {
 }
 
 func CreateTask(taskdata icarus.TaskData) (ID int, t *task.Task, err error) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	ID, err = storage.CreateTask(taskdata)
 	if err != nil {
 		return
@@ -67,6 +72,9 @@ func CreateTask(taskdata icarus.TaskData) (ID int, t *task.Task, err error) {
 
 // Once a task is deleted, it would be stopped first.
 func DeleteTask(ID int) error {
+	mu.Lock()
+	defer mu.Unlock()
+
 	entry, exist := tasks[ID]
 	if !exist {
 		return ErrNotFound
@@ -81,6 +89,9 @@ func DeleteTask(ID int) error {
 }
 
 func GetTask(ID int) (*task.Task, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	entry, exist := tasks[ID]
 	if !exist {
 		return nil, ErrNotFound
@@ -89,6 +100,9 @@ func GetTask(ID int) (*task.Task, error) {
 }
 
 func ListTasks() []*task.Task {
+	mu.Lock()
+	defer mu.Unlock()
+
 	res := make([]*task.Task, 0)
 	for _, entry := range tasks {
 		res = append(res, entry.Instance)
@@ -97,6 +111,9 @@ func ListTasks() []*task.Task {
 }
 
 func GetTaskData(ID int) (icarus.TaskData, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	entry, exist := tasks[ID]
 	if !exist {
 		return icarus.TaskData{}, ErrNotFound
@@ -105,6 +122,9 @@ func GetTaskData(ID int) (icarus.TaskData, error) {
 }
 
 func ListTasksData() []icarus.TaskData {
+	mu.Lock()
+	defer mu.Unlock()
+
 	res := make([]icarus.TaskData, 0)
 	for _, entry := range tasks {
 		hdr := entry.Header
@@ -121,7 +141,11 @@ func InitManager() {
 		panic(err)
 	}
 	for _, t := range tasksdata {
-		_, err := addTask(t)
+		inst, err := addTask(t)
+
+		// Start task
+		inst.Start()
+
 		if err != nil {
 			panic(err)
 		}

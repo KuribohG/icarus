@@ -79,23 +79,24 @@ func (pu PKUUser) ListCourse() ([]icarus.CourseData, error) {
 		//     + Token
 
 		if len(res.Data) < 1 {
-			log.Warnf("Client PKU: Invalid course list: %v", res.Data)
+			log.Warnf("Client PKU (%s): Invalid course list: %v", pu.userID, res.Data)
 			return nil, server.ErrInvalidData
 		}
 		if res.Data[0] != "succeeded" {
 			return nil, errors.New(res.Data[0])
 		}
 		if len(res.Data) < 2 {
-			log.Warnf("Client PKU: Invalid course list: %v", res.Data)
+			log.Warnf("Client PKU (%s): Invalid course list: %v", pu.userID, res.Data)
 			return nil, server.ErrInvalidData
 		}
 		count, err := strconv.Atoi(res.Data[1])
 		if err != nil {
-			log.Warnf("Client PKU: Failed to parse course list count: %s (%v)", err.Error(), res.Data)
+			log.Warnf("Client PKU (%s): Failed to parse course list count: %s (%v)", pu.userID, err.Error(), res.Data)
+			return nil, server.ErrInvalidData
 		}
 		rawData := res.Data[2:]
 		if len(rawData) < 3*count {
-			log.Warnf("Client PKU: Invalid course list: %v", res.Data)
+			log.Warnf("Client PKU (%s): Invalid course list: %v", pu.userID, res.Data)
 			return nil, server.ErrInvalidData
 		}
 		res := make([]icarus.CourseData, count)
@@ -117,7 +118,7 @@ func (pc PKUCourse) Name() string {
 func (pc PKUCourse) Elect(session icarus.LoginSession) (bool, error) {
 	s, ok := session.(PKULoginSession)
 	if !ok {
-		log.Warnf("Client PKU: Wrong session type! Session should be a JSESSIONID string.")
+		log.Warnf("Client PKU (%s): Wrong session type! Session should be a JSESSIONID string.", pc.name)
 		return false, server.ErrWrongType
 	}
 
@@ -133,14 +134,14 @@ func (pc PKUCourse) Elect(session icarus.LoginSession) (bool, error) {
 		// + "succeeded" / "full" / error
 
 		if len(res.Data) < 1 {
-			log.Warnf("Client PKU: Invalid elect response: %v", res.Data)
+			log.Warnf("Client PKU (%s): Invalid elect response: %v", pc.name, res.Data)
 			return false, server.ErrInvalidData
 		}
 		if res.Data[0] == "succeeded" {
-			log.Infof("Client PKU: Elected!")
+			log.Infof("Client PKU (%s): Elected!", pc.name)
 			return true, nil
 		} else if res.Data[0] == "full" {
-			log.Infof("Client PKU: Full.")
+			log.Infof("Client PKU (%s): Full.", pc.name)
 			return false, nil
 		} else if res.Data[0] == "session expired" {
 			return false, task.ErrSessionExpired

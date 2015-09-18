@@ -9,6 +9,7 @@ import (
 	"github.com/applepi-icpc/icarus/client"
 	_ "github.com/applepi-icpc/icarus/client/pku/server"
 	"github.com/applepi-icpc/icarus/dispatcher/server"
+	"github.com/applepi-icpc/icarus/handler"
 	"github.com/applepi-icpc/icarus/task/manager"
 	"github.com/gorilla/context"
 	"github.com/rs/cors"
@@ -45,6 +46,7 @@ func main() {
 	}
 
 	log.Infof("API Handler at %s", *flagAPIBind)
+	handler.InitHandler()
 	var handler http.Handler = http.DefaultServeMux
 	if *flagCORS {
 		c := cors.New(cors.Options{
