@@ -9,8 +9,6 @@ import (
 
 	"github.com/applepi-icpc/icarus"
 
-	"github.com/howeyc/gopass"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/applepi-icpc/icarus/client"
 	_ "github.com/applepi-icpc/icarus/client/pku/satellite"
@@ -75,13 +73,15 @@ func main() {
 
 	var username, password string
 	fmt.Printf("Username: ")
-	_, err = fmt.Scanf("%s", &username)
+	_, err = fmt.Scanln(&username)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("Password: ")
-	passb := gopass.GetPasswd()
-	password = string(passb)
+	_, err = fmt.Scanln(&password)
+	if err != nil {
+		panic(err)
+	}
 
 	user, err := cli.MakeUser(username, password)
 	if err != nil {
