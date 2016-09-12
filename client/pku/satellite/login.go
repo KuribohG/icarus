@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -80,7 +81,8 @@ func LoginHelper(data []string) (string, string, error) {
 	token := match[1]
 
 	// Step 3: Get Elective Session
-	res, err = http.Get(fmt.Sprintf("%s/elective2008/ssoLogin.do?token=%s", electRoot, token))
+	randS := fmt.Sprintf("%.15f", rand.Float64())
+	res, err = http.Get(fmt.Sprintf("%s/elective2008/ssoLogin.do?rand=%s&token=%s", electRoot, randS, token))
 	if err != nil {
 		return "", "", errors.New(fmt.Sprintf("failed on step 3 (get elective session) #1: %s", err.Error()))
 	}
@@ -101,6 +103,15 @@ func LoginHelper(data []string) (string, string, error) {
 	if err != nil {
 		panic(err)
 	}
+	req.Header.Set("Host", "elective.pku.edu.cn")
+	req.Header.Set("Connection", "keep-alive")
+	req.Header.Set("Pragma", "no-cache")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+	req.Header.Set("Referer", fmt.Sprintf("%s/elective2008/ssoLogin.do?rand=%s&token=%s", electRoot, randS, token))
+	req.Header.Set("Accept-Encoding", "gzip, deflate, sdch")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,zh-TW;q=0.2")
 	req.Header.Set("Cookie", fmt.Sprintf("JSESSIONID=%s", jsessionid))
 	res, err = client.Do(req)
 	if err != nil {
