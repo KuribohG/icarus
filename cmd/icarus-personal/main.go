@@ -11,7 +11,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/applepi-icpc/icarus/client"
-	_ "github.com/applepi-icpc/icarus/client/pku/satellite"
+    _ "../../client/pku/satellite"
+    //_ "github.com/KuribohG/icarus/client/pku/satellite"
 	_ "github.com/applepi-icpc/icarus/client/pku/server"
 	"github.com/applepi-icpc/icarus/dispatcher/satellite"
 	"github.com/applepi-icpc/icarus/dispatcher/server"

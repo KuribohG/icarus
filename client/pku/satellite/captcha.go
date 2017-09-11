@@ -85,9 +85,9 @@ func FetchAndIdentify(jsessionid string) error {
 			continue
 		}
 		resBody := string(rawResBody)
-		if strings.Index(resBody, "<title>") != -1 {
+        if strings.Index(resBody, "\"title\":") != -1 {
 			return errors.New("session expired")
-		} else if strings.Index(resBody, "<valid>2</valid>") != -1 {
+        } else if strings.Index(resBody, "{\"valid\":\"2\"}") != -1 {
 			return nil
 		}
 	}

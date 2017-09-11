@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	reElectedNum = regexp.MustCompile(`(?i)<electedNum>(\d+)</electedNum>`)
+    reElectedNum = regexp.MustCompile(`(?i){"electedNum":"(\d+)"}`)
 	reSupError   = regexp.MustCompile(`<label class='message_error'>(.*?)</label>`)
 )
 
@@ -97,6 +97,7 @@ func Supplement(jsessionid string, index string, seq string) (bool, error) {
 		return false, err
 	}
 	resBody := string(rawResBody)
+    fmt.Println(resBody)
 	if strings.Index(resBody, "success.gif") != -1 {
 		// めでたしめでたし
 		return true, nil
