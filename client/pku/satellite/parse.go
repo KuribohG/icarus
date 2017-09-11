@@ -99,7 +99,7 @@ func parseClass(s string) (res PKUClass, err error) {
 		reIS = reElect
 	} else {
 		res.IsFull = true
-		reIS = reRefresh
+		reIS = reElect
 	}
 	match = reIS.FindStringSubmatch(s)
 	if match == nil {
