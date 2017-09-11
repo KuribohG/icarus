@@ -14,9 +14,9 @@ var (
 	tokenClassBegin = `<td class="datagrid"><a href="/elective2008/edu/pku/stu/elective/controller/supplement/goNested.do?`
 
 	reName    = regexp.MustCompile(`(?i)<span>(.*?)</span>`)
-	reThGr    = regexp.MustCompile(`(?i)<td class="datagrid"><span style="width: 90">(.*?)</span></td>\s*<td class="datagrid" align="center"><span style="width: 30">(.*?)</span>`)
+	reThGr    = regexp.MustCompile(`(?i)<td class="datagrid"><span style="width: 40%">(.*?)</span></td>\s*<td class="datagrid" align="center"><span style="width: 30">(.*?)</span>`)
 	reUbound  = regexp.MustCompile(`(?i)<span id="electedNum\d*?" style="width: 60">(\d+?) / \d+?`)
-	reTime    = regexp.MustCompile(`(?i)<td class="datagrid"><span style="width: 200">(.*?)</span>`)
+	reTime    = regexp.MustCompile(`(?i)<td class="datagrid"><span style="width: 60%">(.*?)</span>`)
 	reCommand = regexp.MustCompile(`(?i)<td class="datagrid" align="center"><a (.)`)
 	reElect   = regexp.MustCompile(`(?i)"/elective2008/edu/pku/stu/elective/controller/supplement/electSupplement.do\?index=(.*?)&amp;seq=(.*?)"`)
 	reRefresh = regexp.MustCompile(`(?i)refreshLimit\('.*?','.*?','.*?','(.*?)','(.*?)','.*?'\);`)
